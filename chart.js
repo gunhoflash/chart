@@ -19,6 +19,12 @@ let points = [
 	[9, 4, '#E18335', false]
 ]; // x, y, color, is_hover_now
 
+let equations = [
+	[(x) => linearPolynomial(x, 0.5, 3), '#aa0000'],
+	[(x) => quadraticPolynomial(x, 0.5, -4, 10), '#00aa00'],
+	[(x) => quadraticPolynomial(x, -2, 4, 1), '#0000aa']
+];
+
 init = (canvas_obj) =>
 {
 	canvas = canvas_obj;
@@ -29,7 +35,8 @@ init = (canvas_obj) =>
 	H = canvas.height();
 
 	drawGrid(context);
-	dots(context, points);
+	drawDots(context, points);
+	drawPolynomials(context, equations, xRange);
 	mouseEvent(context);
 };
 
@@ -65,15 +72,15 @@ drawGrid = (context) =>
 	context.stroke(); // draw lines
 };
 
-dots = (context, point_ar) =>
+drawDots = (context, point_ar) =>
 {
 	point_ar.forEach(point =>
 	{
-		dot(context, point[0], point[1], point[2], point[3]);
+		drawDot(context, point[0], point[1], point[2], point[3]);
 	});
 };
 
-dot = (context, x, y, color = color_dark1, hover = false) =>
+drawDot = (context, x, y, color = color_dark1, hover = false) =>
 {
 	let pixels = point2pixel([x, y]);
 	let r = (hover) ? 6 : 3;
@@ -82,6 +89,34 @@ dot = (context, x, y, color = color_dark1, hover = false) =>
 	context.beginPath();
 	context.arc(pixels[0], pixels[1], r, 0, Math.PI * 2, true);
 	context.fill(); // draw lines
+};
+
+drawPolynomials = (context, equation_obj, interval) =>
+{
+	equation_obj.forEach(equation =>
+	{
+		drawPolynomial(context, equation[0], interval, equation[1]);
+	});
+};
+
+drawPolynomial = (context, polynomial, interval, color) =>
+{
+	let x = interval[0];
+	let pixels;
+	let pointPerPixel = (xRange[1] - xRange[0]) / (W - 20);
+
+	context.lineWidth = 1;
+	context.strokeStyle = color;
+	context.moveTo(x, polynomial(x));
+	context.beginPath();
+
+	while (x - pointPerPixel < interval[1])
+	{
+		x += pointPerPixel;
+		pixels = point2pixel([x, polynomial(x)]);
+		context.lineTo(pixels[0], pixels[1]);
+	}
+	context.stroke(); // draw lines
 };
 
 //
@@ -98,12 +133,12 @@ mouseEvent = (context) =>
 
 			point[3] = !point[3];
 			drawGrid(context);
-			dots(context, points);
+			drawDots(context, points);
+			drawPolynomials(context, equations, xRange);
 			needClear = true;
 		});
 	});
 };
-
 
 //
 
@@ -134,3 +169,8 @@ pixel2point = (pixel) =>
 	const yPoint = (pixel[1] + 10 - H) * (yRange[1] - yRange[0]) / (H - 20);
 	return [xPoint, yPoint];
 };
+
+//
+
+const linearPolynomial = (x, a, b) => a*x + b;
+const quadraticPolynomial = (x, a, b, c) => a*x*x + b*x + c;
